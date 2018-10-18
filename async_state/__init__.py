@@ -24,7 +24,20 @@ class AsyncState(object):
 
     def assert_valid_state(self, state):
         if state not in self.possible_states:
-            raise RuntimeError(f'State ({state}) is not a valid state ({self.possible_states})!')
+            raise ValueError(f'State ({state}) is not a valid state ({self.possible_states})!')
+
+    def __eq__(self, other):
+        ''' Throws exception when compared to invalid state! This simulates a typing situation.'''
+        self.assert_valid_state(other)
+        return self.current_state == other
+
+    def __lt__(self, other):
+        states = list(other)
+        for s in states:
+            self.assert_valid_state(s)
+        
+        return self.current_state in states
+
 
     async def set(self, new_state):
         self.assert_valid_state(new_state)
