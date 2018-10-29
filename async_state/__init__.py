@@ -55,8 +55,18 @@ class AsyncState(object):
             return True
 
         cond = self.state_conditions[new_state]
-        async with cond:
-            await asyncio.wait_for(cond.wait(), timeout=timeout)
+
+        # this gives race condition with: RuntimeError('Lock is not acquired.')
+        # async with cond:
+        #     await asyncio.wait_for(cond.wait(), timeout=timeout)
+
+        # this is necessary because lock acquisition has to be done by 'calling task': 
+        # https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
+        async def wait_for_condition(cond):
+            async with cond:
+                await cond.wait()
+
+        await asyncio.wait_for(wait_for_condition(cond), timeout=timeout)
 
         return True
         
